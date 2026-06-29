@@ -26,3 +26,6 @@ export function skinFor(slot: string): AdSkin {
   return { ...adSkin, ...(adSkinBySlot[slot] ?? {}) }
 }
 // junior tweak
+
+
+  
