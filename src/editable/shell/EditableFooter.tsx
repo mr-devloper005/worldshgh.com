@@ -1,57 +1,80 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowUpRight } from 'lucide-react'
 import { SITE_CONFIG } from '@/lib/site-config'
 import { globalContent } from '@/editable/content/global.content'
 import { useEditableLocalAuthSession } from '@/editable/components/EditableLocalAuthForms'
 
+const baseLinks = [
+  ['Home', '/'],
+  ['About', '/about'],
+  ['Contact', '/contact'],
+  ['Search', '/search'],
+]
+
+const guestLinks = [
+  ...baseLinks,
+  ['Login', '/login'],
+  ['Register', '/signup'],
+]
+
+const memberLinks = [
+  ...baseLinks,
+  ['Create', '/create'],
+]
+
+function BrandMark({ small = false }: { small?: boolean }) {
+  return (
+    <span className={`inline-flex items-center font-bold leading-none text-[#0a66c2] ${small ? 'text-base' : 'text-xl'}`}>
+      <span>{SITE_CONFIG.name.replace(/\.com$/i, '')}</span>
+      <span className="ml-0.5 rounded-[2px] bg-[#0a66c2] px-0.5 text-[0.72em] font-extrabold leading-tight text-white">in</span>
+    </span>
+  )
+}
+
 export function EditableFooter() {
-  const taskLinks = SITE_CONFIG.tasks.filter((task) => task.enabled)
   const year = new Date().getFullYear()
   const { session, logout } = useEditableLocalAuthSession()
+  const links = session ? memberLinks : guestLinks
 
   return (
-    <footer className="border-t border-[var(--editable-border)] bg-[var(--editable-footer-bg)] text-[var(--editable-footer-text)]">
-      <div className="h-[2px] bg-[linear-gradient(90deg,transparent_0%,var(--slot4-accent)_50%,transparent_100%)]" />
-      <div className="mx-auto grid max-w-[var(--editable-container)] gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr_1fr_1fr] lg:px-8">
+    <footer className="bg-[#f3f2ef] text-[#0b0909]">
+      <div className="mx-auto grid max-w-[var(--editable-container)] gap-10 px-4 py-10 sm:px-6 md:grid-cols-[1.1fr_2fr] lg:px-8">
         <div>
-          <Link href="/" className="inline-flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center border border-[var(--slot4-accent)]/40 bg-[var(--slot4-surface-bg)]">
-              <img src="/favicon.png?v=20260413" alt={SITE_CONFIG.name} className="h-8 w-8 object-contain" />
-            </span>
-            <span className="editable-display text-xl font-semibold tracking-[0.01em]">{SITE_CONFIG.name}</span>
+          <Link href="/" className="inline-flex">
+            <BrandMark />
           </Link>
-          <p className="mt-4 max-w-md text-sm leading-7 text-[var(--slot4-muted-text)]">{globalContent.footer?.description || SITE_CONFIG.description}</p>
+          <p className="mt-4 max-w-sm text-sm leading-6 text-[#65615c]">{globalContent.footer?.description || SITE_CONFIG.description}</p>
         </div>
 
         <div>
-          <h3 className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[var(--slot4-accent)]">Explore</h3>
-          <div className="mt-4 grid gap-2">
-            {taskLinks.map((task) => (
-              <Link key={task.key} href={task.route} className="inline-flex items-center gap-2 text-sm font-medium text-[var(--slot4-muted-text)] transition hover:text-[var(--slot4-page-text)]">
-                {task.label} <ArrowUpRight className="h-3.5 w-3.5" />
+          <h3 className="text-sm font-semibold">Links</h3>
+          <div className="mt-3 grid gap-2">
+            {links.map(([label, href]) => (
+              <Link key={`${label}-${href}`} href={href} className="text-sm text-[#4f5654] transition hover:text-[#0a66c2]">
+                {label}
               </Link>
             ))}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[var(--slot4-accent)]">Site</h3>
-          <div className="mt-4 grid gap-2">
-            {[
-              ['About', '/about'],
-              ['Contact', '/contact'],
-              ...(session ? [['Create', '/create']] : [['Login', '/login'], ['Sign up', '/signup']]),
-            ].map(([label, href]) => (
-              <Link key={href} href={href} className="text-sm font-medium text-[var(--slot4-muted-text)] transition hover:text-[var(--slot4-page-text)]">{label}</Link>
-            ))}
-            {session ? <button type="button" onClick={logout} className="text-left text-sm font-medium text-[var(--slot4-muted-text)] transition hover:text-[var(--slot4-page-text)]">Logout</button> : null}
+            {session ? (
+              <button type="button" onClick={logout} className="text-left text-sm text-[#4f5654] transition hover:text-[#0a66c2]">
+                Logout
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
-      <div className="border-t border-[var(--editable-border)] px-4 py-5 text-center text-xs font-medium tracking-[0.12em] text-[var(--slot4-muted-text)]">
-        © {year} {SITE_CONFIG.name}. All rights reserved.
+
+      <div className="border-t border-[#dedbd4] bg-white">
+        <div className="mx-auto flex max-w-[var(--editable-container)] flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 text-xs text-[#65615c] sm:px-6 lg:px-8">
+          <BrandMark small />
+          <span>&copy; {year}</span>
+          {links.map(([label, href]) => (
+            <Link key={`${label}-${href}`} href={href}>
+              {label}
+            </Link>
+          ))}
+          {session ? <button type="button" onClick={logout}>Logout</button> : null}
+        </div>
       </div>
     </footer>
   )
