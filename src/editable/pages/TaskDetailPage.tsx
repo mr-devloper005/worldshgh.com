@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, ArrowUpRight, Bookmark, BriefcaseBusiness, Download, ExternalLink, FileText, Globe2, Image as ImageIcon, Mail, MoreHorizontal, Phone, Tag, UserRound } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Bookmark, BriefcaseBusiness, Download, ExternalLink, FileText, Globe2, Image as ImageIcon, Mail, MoreHorizontal, Phone, Star, Tag, UserRound } from 'lucide-react'
 import { buildPostMetadata, buildTaskMetadata } from '@/lib/seo'
 import { fetchTaskPostBySlug, fetchTaskPosts } from '@/lib/task-data'
 import { getTaskConfig, SITE_CONFIG, type TaskKey } from '@/lib/site-config'
@@ -105,9 +105,141 @@ export function TaskDetailView({ task, post, related }: { task: TaskKey; post: S
   return (
     <EditableSiteShell>
       <main style={taskThemeStyle(task)} className="min-h-screen bg-[#f3f2ef] text-[#0b0909]">
-        <DetailLayout task={task} post={post} related={related} />
+        {task === 'profile'
+          ? <ProfileDetailLayout task={task} post={post} related={related} />
+          : <DetailLayout task={task} post={post} related={related} />}
       </main>
     </EditableSiteShell>
+  )
+}
+
+function ratingFromPost(post: SitePost) {
+  const seed = `${post.slug || ''}${post.id || ''}${post.title || ''}`
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) | 0
+  const normalized = Math.abs(hash % 1200) / 1000
+  const value = 3.8 + normalized
+  return Math.min(4.9, Math.round(value * 10) / 10)
+}
+
+function RatingStars({ value }: { value: number }) {
+  const filled = Math.round(value)
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-0.5">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <Star
+            key={i}
+            className={`h-4 w-4 ${i < filled ? 'fill-[#408175] text-[#408175]' : 'text-[#c9cfcd]'}`}
+          />
+        ))}
+      </div>
+      <span className="text-sm font-semibold text-[#0b0909]">{value.toFixed(1)}</span>
+    </div>
+  )
+}
+
+function ProfileDetailLayout({ task, post, related }: { task: TaskKey; post: SitePost; related: SitePost[] }) {
+  const taskConfig = getTaskConfig(task)
+  const images = getImages(post)
+  const website = getField(post, ['website', 'url', 'link'])
+  const category = categoryOf(post, taskConfig?.label || 'Profile')
+  const rating = ratingFromPost(post)
+  const overview = leadText(post) || getBody(post)
+  const gallery = (images.length ? images : [placeholder]).slice(0, 3)
+  while (gallery.length < 3) gallery.push(gallery[0] || placeholder)
+
+  return (
+    <>
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <Ads slot="header" showLabel eager className="mx-auto w-full" />
+      </div>
+
+      <section className="mx-auto max-w-[var(--editable-container)] px-4 py-6 sm:px-6 lg:px-8">
+        <Link
+          href={taskConfig?.route || '/'}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#56615e] transition hover:text-[#408175]"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to {taskConfig?.label || 'Profile'}
+        </Link>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+          <div className="rounded-2xl border border-[#dedbd4] bg-white p-6 text-center">
+            <div className="mx-auto flex h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-[#e5f2ef]">
+              {images[0]
+                ? <img src={images[0]} alt={post.title} className="h-full w-full object-cover" />
+                : <UserRound className="h-16 w-16 text-[#408175]" />}
+            </div>
+            <h1 className="mt-5 text-2xl font-semibold leading-tight text-[#0b0909] sm:text-[26px]">{post.title}</h1>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+              <RatingStars value={rating} />
+              <span className="text-sm text-[#56615e]">{category}</span>
+              <span className="text-sm text-[#56615e]">{SITE_CONFIG.name}</span>
+            </div>
+            {website ? (
+              <div className="mt-5">
+                <Link
+                  href={website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-full bg-[#408175] px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+                >
+                  Visit website
+                </Link>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-[#dedbd4] bg-white p-6 sm:p-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#408175]">Profile Overview</p>
+              <div
+                className="article-content mt-4 max-w-none text-[1rem] leading-8 text-[#363c3a]"
+                dangerouslySetInnerHTML={{ __html: formatPlainText(overview) }}
+              />
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#408175]">Gallery</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                {gallery.map((image, index) => (
+                  <div
+                    key={`${image}-${index}`}
+                    className="overflow-hidden rounded-2xl border border-[#dedbd4] bg-white"
+                  >
+                    <img
+                      src={image}
+                      alt={`${post.title} gallery ${index + 1}`}
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto max-w-6xl py-6">
+          <Ads slot="in-feed" showLabel eager className="mx-auto w-full" />
+        </div>
+
+        <div className="mt-2 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="rounded-2xl border border-[#dedbd4] bg-white p-6 sm:p-7">
+            <BodyContent post={post} />
+          </div>
+          <aside className="space-y-4">
+            <SidePanel title={`More ${taskConfig?.label || 'profiles'}`} related={related} task={task} />
+            <div className="rounded-2xl border border-[#dedbd4] bg-white p-6">
+              <h2 className="text-2xl font-normal">About this profile</h2>
+              <div className="mt-5 grid gap-3 text-sm text-[#56615e]">
+                <p className="inline-flex items-center gap-2"><Tag className="h-4 w-4 text-[#408175]" /> {category}</p>
+                <p className="inline-flex items-center gap-2"><Globe2 className="h-4 w-4 text-[#408175]" /> {SITE_CONFIG.name}</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </>
   )
 }
 

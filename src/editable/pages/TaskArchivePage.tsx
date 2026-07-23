@@ -26,9 +26,6 @@ const isUrl = (value: string) => value.startsWith('/') || /^https?:\/\//i.test(v
 const stripHtml = (value: string) => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 const placeholder = '/placeholder.svg?height=900&width=1200'
 
-const dedupeUrls = (urls: Array<string | null | undefined>): string[] =>
-  Array.from(new Set(urls.map((url) => (typeof url === 'string' ? url.trim() : '')).filter((url) => url.length > 0)))
-
 const getImages = (post: SitePost) => {
   const content = getContent(post)
   const media = Array.isArray(post.media) ? post.media.map((item) => item?.url).filter((url): url is string => typeof url === 'string' && isUrl(url)) : []
