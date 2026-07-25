@@ -151,9 +151,7 @@ function ProfileDetailLayout({ task, post, related }: { task: TaskKey; post: Sit
 
   return (
     <>
-      <div className="mx-auto max-w-6xl px-4 py-6">
-        <Ads slot="header" showLabel eager className="mx-auto w-full" />
-      </div>
+     
 
       <section className="mx-auto max-w-[var(--editable-container)] px-4 py-6 sm:px-6 lg:px-8">
         <Link
@@ -191,14 +189,6 @@ function ProfileDetailLayout({ task, post, related }: { task: TaskKey; post: Sit
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-2xl border border-[#dedbd4] bg-white p-6 sm:p-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#408175]">Profile Overview</p>
-              <div
-                className="article-content mt-4 max-w-none text-[1rem] leading-8 text-[#363c3a]"
-                dangerouslySetInnerHTML={{ __html: formatPlainText(overview) }}
-              />
-            </div>
-
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#408175]">Gallery</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -219,9 +209,6 @@ function ProfileDetailLayout({ task, post, related }: { task: TaskKey; post: Sit
           </div>
         </div>
 
-        <div className="mx-auto max-w-6xl py-6">
-          <Ads slot="in-feed" showLabel eager className="mx-auto w-full" />
-        </div>
 
         <div className="mt-2 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="rounded-2xl border border-[#dedbd4] bg-white p-6 sm:p-7">
