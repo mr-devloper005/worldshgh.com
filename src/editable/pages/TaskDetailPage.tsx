@@ -145,7 +145,7 @@ function ProfileDetailLayout({ task, post, related }: { task: TaskKey; post: Sit
   const website = getField(post, ['website', 'url', 'link'])
   const category = categoryOf(post, taskConfig?.label || 'Profile')
   const rating = ratingFromPost(post)
-  const overview = leadText(post) || getBody(post)
+  const _overview = leadText(post) || getBody(post)
   const gallery = (images.length ? images : [placeholder]).slice(0, 3)
   while (gallery.length < 3) gallery.push(gallery[0] || placeholder)
 
