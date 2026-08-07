@@ -23,12 +23,13 @@ const memberLinks = [
   ['Create', '/create'],
 ]
 
-function BrandMark({ small = false }: { small?: boolean }) {
+function FooterLogo({ small = false }: { small?: boolean }) {
   return (
-    <span className={`inline-flex items-center font-bold leading-none text-[#0a66c2] ${small ? 'text-base' : 'text-xl'}`}>
-      <span>{SITE_CONFIG.name.replace(/\.com$/i, '')}</span>
-      <span className="ml-0.5 rounded-[2px] bg-[#0a66c2] px-0.5 text-[0.72em] font-extrabold leading-tight text-white">in</span>
-    </span>
+    <img
+      src="/favicon.png"
+      alt={SITE_CONFIG.name}
+      className={small ? 'h-5 w-auto' : 'h-8 w-auto'}
+    />
   )
 }
 
@@ -42,7 +43,7 @@ export function EditableFooter() {
       <div className="mx-auto grid max-w-[var(--editable-container)] gap-10 px-4 py-10 sm:px-6 md:grid-cols-[1.1fr_2fr] lg:px-8">
         <div>
           <Link href="/" className="inline-flex">
-            <BrandMark />
+            <FooterLogo />
           </Link>
           <p className="mt-4 max-w-sm text-sm leading-6 text-[#65615c]">{globalContent.footer?.description || SITE_CONFIG.description}</p>
         </div>
@@ -66,7 +67,7 @@ export function EditableFooter() {
 
       <div className="border-t border-[#dedbd4] bg-white">
         <div className="mx-auto flex max-w-[var(--editable-container)] flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 text-xs text-[#65615c] sm:px-6 lg:px-8">
-          <BrandMark small />
+          <FooterLogo small />
           <span>&copy; {year}</span>
           {links.map(([label, href]) => (
             <Link key={`${label}-${href}`} href={href}>
