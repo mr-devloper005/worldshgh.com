@@ -20,33 +20,34 @@ export type TaskTheme = {
   radius: string
 }
 
-const SOCIAL_FONT = "'Inter', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif"
+const DISPLAY_FONT = "'Cormorant Garamond', Georgia, serif"
+const BODY_FONT = "'Space Grotesk', system-ui, -apple-system, sans-serif"
 
 const base = {
-  dark: false,
-  fontDisplay: SOCIAL_FONT,
-  fontBody: SOCIAL_FONT,
-  bg: '#f3f2ef',
-  surface: '#ffffff',
-  raised: '#eef3f7',
-  text: '#0B0909',
-  muted: '#56615e',
-  line: '#dedbd4',
-  accent: '#408175',
-  accentSoft: '#e5f2ef',
-  onAccent: '#ffffff',
-  glow: 'rgba(64,129,117,0.12)',
-  radius: '0.5rem',
+  dark: true,
+  fontDisplay: DISPLAY_FONT,
+  fontBody: BODY_FONT,
+  bg: '#000000',
+  surface: '#0a0a0a',
+  raised: '#111111',
+  text: '#c8c2b6',
+  muted: '#7a7468',
+  line: 'rgba(255,255,255,0.08)',
+  accent: '#c9a96e',
+  accentSoft: 'rgba(201,169,110,0.1)',
+  onAccent: '#000000',
+  glow: 'rgba(201,169,110,0.08)',
+  radius: '0',
 } satisfies Omit<TaskTheme, 'kicker' | 'note'>
 
 export const taskThemes: Record<TaskKey, TaskTheme> = {
-  article: { ...base, kicker: 'Top Content', note: 'Articles, essays, and useful perspectives from the community.' },
-  listing: { ...base, kicker: 'Directory', note: 'Business and organization pages with practical details.' },
-  classified: { ...base, kicker: 'Opportunities', note: 'Fresh posts, notices, and time-sensitive updates.' },
-  image: { ...base, kicker: 'Visuals', note: 'Image-first posts and galleries from contributors.' },
-  sbm: { ...base, kicker: 'Resources', note: 'Curated links and references worth saving.' },
-  pdf: { ...base, kicker: 'Documents', note: 'Downloadable guides, reports, and public files.' },
-  profile: { ...base, kicker: 'People', note: 'Profiles for writers, creators, businesses, and professionals.' },
+  article: { ...base, kicker: 'The Work', note: 'In-depth articles and essays exploring ideas worth your time.' },
+  listing: { ...base, kicker: 'Directory', note: 'Curated business and organization profiles.' },
+  classified: { ...base, kicker: 'Notices', note: 'Time-sensitive posts and opportunities.' },
+  image: { ...base, kicker: 'Gallery', note: 'Visual stories and image collections.' },
+  sbm: { ...base, kicker: 'Resources', note: 'Saved links and curated references.' },
+  pdf: { ...base, kicker: 'Documents', note: 'Downloadable guides and reference material.' },
+  profile: { ...base, kicker: 'People', note: 'Freelancers, creators, and professionals.' },
 }
 
 export function getTaskTheme(task: TaskKey): TaskTheme {

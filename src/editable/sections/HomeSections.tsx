@@ -1,10 +1,10 @@
 import Link from 'next/link'
-import { ArrowRight, BookOpen, BriefcaseBusiness, Building2, ChevronRight, GraduationCap, MessageCircle, PenLine, Sparkles, UserRound, UsersRound } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import type { SitePost } from '@/lib/site-connector'
 import type { HomeTimeSection } from '@/lib/task-data'
 import type { TaskKey } from '@/lib/site-config'
 import { SITE_CONFIG } from '@/lib/site-config'
-import { getEditablePostImage, postHref } from '@/editable/cards/PostCards'
+import { getEditablePostImage, getEditableExcerpt, postHref } from '@/editable/cards/PostCards'
 
 type HomeSectionProps = {
   primaryTask: TaskKey
@@ -13,31 +13,7 @@ type HomeSectionProps = {
   timeSections: HomeTimeSection[]
 }
 
-const container = 'mx-auto w-full max-w-[var(--editable-container)] px-4 sm:px-6 lg:px-8'
-
-function contentOf(post?: SitePost | null) {
-  return post?.content && typeof post.content === 'object' ? post.content as Record<string, unknown> : {}
-}
-
-function clean(value = '') {
-  return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-}
-
-function excerpt(post?: SitePost | null, limit = 130) {
-  const content = contentOf(post)
-  const raw =
-    (typeof content.description === 'string' && content.description) ||
-    (typeof content.summary === 'string' && content.summary) ||
-    post?.summary ||
-    'Open the post to read the full update and follow the conversation.'
-  const text = clean(raw)
-  return text.length > limit ? `${text.slice(0, limit).trim()}...` : text
-}
-
-function categoryOf(post?: SitePost | null, fallback = 'Top Content') {
-  const content = contentOf(post)
-  return (typeof content.category === 'string' && content.category) || post?.tags?.[0] || fallback
-}
+const container = 'mx-auto w-full max-w-[1200px] px-6 sm:px-8 lg:px-10'
 
 function dedupePosts(posts: SitePost[]) {
   const seen = new Set<string>()
@@ -51,205 +27,252 @@ function dedupePosts(posts: SitePost[]) {
   return out
 }
 
-const topics = ['Career', 'Productivity', 'Finance', 'Writing', 'Research', 'Education', 'Technology', 'Leadership', 'Community', 'Publishing']
-const games = ['Drafts', 'Ideas', 'Reviews', 'Comments', 'Topics', 'Saved Reads']
-
-function TopicPills({ items, limit }: { items: string[]; limit?: number }) {
-  return (
-    <div className="flex flex-wrap gap-3">
-      {items.slice(0, limit || items.length).map((item) => (
-        <Link key={item} href={`/search?q=${encodeURIComponent(item)}`} className="rounded-full border border-[#0b0909] bg-white px-6 py-3 text-sm font-semibold text-[#202124] transition hover:bg-[#f3f2ef]">
-          {item}
-        </Link>
-      ))}
-    </div>
-  )
+function categoryOf(post?: SitePost | null, fallback = 'Featured') {
+  const content = post?.content && typeof post.content === 'object' ? post.content as Record<string, unknown> : {}
+  return (typeof content.category === 'string' && content.category) || post?.tags?.[0] || fallback
 }
 
-function HeroIllustration({ posts, primaryTask, primaryRoute }: { posts: SitePost[]; primaryTask: TaskKey; primaryRoute: string }) {
-  const featured = posts.slice(0, 3)
+const floatingPositions = [
+  { top: '8%', left: '5%', width: '22%', aspectRatio: '4/3', zIndex: 2 },
+  { top: '4%', left: '32%', width: '14%', aspectRatio: '3/4', zIndex: 3 },
+  { top: '12%', left: '50%', width: '18%', aspectRatio: '1/1', zIndex: 1 },
+  { top: '5%', left: '72%', width: '16%', aspectRatio: '4/3', zIndex: 2 },
+  { top: '55%', left: '8%', width: '18%', aspectRatio: '3/4', zIndex: 1 },
+  { top: '48%', left: '30%', width: '22%', aspectRatio: '16/10', zIndex: 3 },
+  { top: '52%', left: '56%', width: '15%', aspectRatio: '3/4', zIndex: 2 },
+  { top: '45%', left: '76%', width: '18%', aspectRatio: '4/3', zIndex: 1 },
+]
+
+export function EditableHomeHero({ primaryTask, primaryRoute, posts, timeSections }: HomeSectionProps) {
+  const pool = dedupePosts([...posts, ...timeSections.flatMap((s) => s.posts)])
+  const siteName = SITE_CONFIG.name.replace(/\.com$/i, '')
+
   return (
-    <div className="relative min-h-[430px] overflow-hidden">
-      <div className="absolute right-0 top-5 h-[390px] w-[390px] rounded-full bg-[#e7f2f6]" />
-      <div className="absolute right-10 top-16 h-[320px] w-[300px] rounded-t-full bg-[#fff1d6]" />
-      <div className="absolute right-16 top-24 grid w-[240px] grid-cols-2 gap-2">
-        {featured.map((post, index) => (
-          <Link key={post.id || post.slug} href={postHref(primaryTask, post, primaryRoute)} className={`group overflow-hidden rounded-sm bg-white shadow-sm ${index === 0 ? 'col-span-2 h-36' : 'h-28'}`}>
-            <img src={getEditablePostImage(post)} alt={post.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-          </Link>
-        ))}
-        {!featured.length ? (
+    <section className="relative min-h-screen overflow-hidden bg-black pt-20">
+      <div className="absolute inset-0">
+        {pool.slice(0, 8).map((post, i) => {
+          const pos = floatingPositions[i] || floatingPositions[0]
+          return (
+            <Link
+              key={post.id || post.slug}
+              href={postHref(primaryTask, post, primaryRoute)}
+              className="group absolute overflow-hidden transition-all duration-700 hover:z-10"
+              style={{
+                top: pos.top,
+                left: pos.left,
+                width: pos.width,
+                aspectRatio: pos.aspectRatio,
+                zIndex: pos.zIndex,
+                animation: `float-drift ${6 + i * 0.7}s ease-in-out infinite`,
+                animationDelay: `${i * 0.5}s`,
+              }}
+            >
+              <img
+                src={getEditablePostImage(post)}
+                alt={post.title}
+                className="h-full w-full object-cover opacity-35 transition duration-700 group-hover:opacity-60 group-hover:scale-105"
+              />
+            </Link>
+          )
+        })}
+        {!pool.length ? (
           <>
-            <div className="col-span-2 h-36 bg-[#b5b9f0]" />
-            <div className="h-28 bg-[#408175]" />
-            <div className="h-28 bg-[#2e4540]" />
+            {[0, 1, 2, 3, 4, 5].map((i) => {
+              const pos = floatingPositions[i]
+              return (
+                <div
+                  key={i}
+                  className="absolute bg-[#111111]"
+                  style={{
+                    top: pos.top, left: pos.left, width: pos.width,
+                    aspectRatio: pos.aspectRatio, zIndex: pos.zIndex,
+                    animation: `float-drift ${6 + i * 0.7}s ease-in-out infinite`,
+                    animationDelay: `${i * 0.5}s`,
+                  }}
+                />
+              )
+            })}
           </>
         ) : null}
       </div>
-      <div className="absolute bottom-8 left-6 h-48 w-36 rounded-t-full bg-[#2e4540]" />
-      <div className="absolute bottom-0 left-16 h-28 w-24 bg-[#6f7b61]" />
-      <div className="absolute bottom-20 left-20 h-20 w-20 rounded-full bg-[#513227]" />
-      <div className="absolute bottom-28 left-36 h-14 w-32 rotate-[-8deg] rounded-md bg-[#d9e8ea]" />
-      <div className="absolute bottom-1 left-8 h-3 w-28 rounded-full bg-[#d8a08c]" />
-      <div className="absolute bottom-10 right-2 h-24 w-20 rounded-t-full bg-[#b8c7be]" />
-    </div>
-  )
-}
 
-function FeedPreview({ post, href }: { post: SitePost; href: string }) {
-  return (
-    <Link href={href} className="group block rounded-lg border border-[#dedbd4] bg-white transition hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
-      <div className="flex items-start gap-3 p-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5f2ef]">
-          <img src={getEditablePostImage(post)} alt="" className="h-full w-full object-cover" />
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{post.title}</p>
-          <p className="mt-0.5 text-xs text-[#666]">{categoryOf(post)} · {SITE_CONFIG.name}</p>
-        </div>
-      </div>
-      <p className="px-4 pb-4 text-sm leading-6 text-[#0b0909]">{excerpt(post, 145)}</p>
-      <div className="aspect-[16/10] overflow-hidden bg-[#eef3f7]">
-        <img src={getEditablePostImage(post)} alt={post.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-      </div>
-      
-    </Link>
-  )
-}
-
-export function EditableHomeHero({ primaryTask, primaryRoute, posts, timeSections }: HomeSectionProps) {
-  const pool = dedupePosts([...posts, ...timeSections.flatMap((section) => section.posts)])
-  return (
-    <section className="bg-white">
-      <div className={`grid min-h-[650px] items-center gap-10 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:py-20 ${container}`}>
-        <div>
-          <h1 className="max-w-[580px] text-[2.75rem] font-normal leading-[1.18] text-[#0b0909] sm:text-5xl lg:text-[3.45rem]">
-            Explore ideas and grow your professional network
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center">
+        <div className="max-w-3xl">
+          <p className="text-[11px] font-medium uppercase tracking-[0.5em] text-[#7a7468]">Welcome</p>
+          <h1 className="mt-6 leading-[1.3]" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            <span className="block text-[11px] font-medium uppercase tracking-[0.5em] text-[#7a7468]" style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>to</span>
+            <span className="mt-2 block text-4xl font-light uppercase tracking-[0.15em] text-[#e8e2d6] sm:text-5xl lg:text-6xl">
+              {siteName}&apos;s
+            </span>
+            <span className="mt-1 block text-[11px] font-medium uppercase tracking-[0.5em] text-[#7a7468]" style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>universe of</span>
+            <span className="mt-2 block text-3xl font-light uppercase tracking-[0.12em] text-[#c8c2b6] sm:text-4xl lg:text-5xl">
+              Articles
+            </span>
+            <span className="mt-1 block text-[11px] font-medium uppercase tracking-[0.5em] text-[#7a7468]" style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>and</span>
+            <span className="mt-2 block text-3xl font-light uppercase tracking-[0.12em] text-[#c8c2b6] sm:text-4xl lg:text-5xl">
+              Creative Profiles
+            </span>
           </h1>
         </div>
-        <HeroIllustration posts={pool} primaryTask={primaryTask} primaryRoute={primaryRoute} />
+      </div>
+
+      <div className="absolute bottom-12 left-0 right-0 z-10 text-center">
+        <Link
+          href={primaryRoute}
+          className="text-[11px] font-medium uppercase tracking-[0.4em] text-[#7a7468] transition duration-500 hover:text-[#c9a96e]"
+        >
+          Scroll to explore
+        </Link>
       </div>
     </section>
   )
 }
 
-export function EditableStoryRail(_props: HomeSectionProps) {
+export function EditableStoryRail({ primaryTask, primaryRoute, posts, timeSections }: HomeSectionProps) {
+  const pool = dedupePosts([...posts, ...timeSections.flatMap((s) => s.posts)])
+  if (!pool.length) return null
+
   return (
-    <section className="bg-[#f3f2ef]">
-      <div className={`grid gap-10 py-16 lg:grid-cols-[0.8fr_1.2fr] ${container}`}>
-        <div>
-          <h2 className="max-w-md text-3xl font-normal leading-tight sm:text-4xl">Explore top {SITE_CONFIG.name.replace(/\.com$/i, '')} content</h2>
-          <p className="mt-4 max-w-md text-xl leading-8">Discover relevant posts and thoughtful perspectives, curated by topic in one place.</p>
-        </div>
-        <TopicPills items={topics} />
+    <section className="border-t border-white/[0.04] bg-black py-20 sm:py-28">
+      <div className={container}>
+        <p className="text-[11px] font-medium uppercase tracking-[0.4em] text-[#7a7468]">The Work</p>
+        <h2 className="mt-4 text-3xl font-light uppercase tracking-[0.1em] text-[#e8e2d6] sm:text-4xl" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+          Featured Articles
+        </h2>
+      </div>
+      <div className="mt-12 flex snap-x gap-6 overflow-x-auto px-6 pb-4 sm:px-8 lg:px-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {pool.slice(0, 8).map((post, i) => (
+          <Link
+            key={post.id || post.slug}
+            href={postHref(primaryTask, post, primaryRoute)}
+            className="group w-[220px] shrink-0 snap-start sm:w-[280px]"
+          >
+            <div className="relative aspect-[3/4] overflow-hidden">
+              <img src={getEditablePostImage(post)} alt={post.title} className="absolute inset-0 h-full w-full object-cover opacity-40 transition duration-700 group-hover:opacity-60" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-5">
+                <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#7a7468]">{String(i + 1).padStart(3, '0')}</p>
+                <h3 className="mt-2 line-clamp-2 text-base font-light uppercase tracking-[0.06em] text-[#e8e2d6]" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                  {post.title}
+                </h3>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </section>
   )
 }
 
 export function EditableMagazineSplit({ primaryTask, primaryRoute, posts, timeSections }: HomeSectionProps) {
-  const pool = dedupePosts([...posts, ...timeSections.flatMap((section) => section.posts)])
+  const pool = dedupePosts([...posts, ...timeSections.flatMap((s) => s.posts)])
+  const featured = pool[0]
+  const side = pool.slice(1, 4)
+
   return (
     <>
-      <section className="bg-[#ece7df]">
-        <div className={`py-16 text-center ${container}`}>
-          <h2 className="text-3xl font-normal text-[#9f3b20]">Publish your work for more people to see</h2>
-          <Link href="/create" className="mt-8 inline-flex rounded-full border border-[#0a66c2] px-6 py-3 text-sm font-semibold text-[#0a66c2] transition hover:bg-white">Create a post</Link>
-        </div>
-      </section>
+      {featured ? (
+        <section className="border-t border-white/[0.04] bg-black">
+          <div className={`grid gap-0 lg:grid-cols-2 ${container} !px-0`}>
+            <Link href={postHref(primaryTask, featured, primaryRoute)} className="group relative min-h-[500px] overflow-hidden lg:min-h-[600px]">
+              <img src={getEditablePostImage(featured)} alt={featured.title} className="absolute inset-0 h-full w-full object-cover opacity-35 transition duration-700 group-hover:opacity-50" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-12">
+                <p className="text-[10px] font-medium uppercase tracking-[0.4em] text-[#c9a96e]">Featured</p>
+                <h2 className="mt-4 max-w-lg text-3xl font-light uppercase tracking-[0.08em] text-[#e8e2d6] sm:text-4xl" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                  {featured.title}
+                </h2>
+                <p className="mt-4 max-w-md text-sm leading-[1.8] text-[#7a7468]">{getEditableExcerpt(featured, 140)}</p>
+              </div>
+            </Link>
 
-      <section className="bg-white">
-        <div className={`grid gap-10 py-20 lg:grid-cols-[0.8fr_1.2fr] ${container}`}>
-          <div>
-            <h2 className="max-w-md text-3xl font-normal leading-tight sm:text-4xl">Keep your mind sharp with fresh ideas</h2>
-            <p className="mt-4 max-w-md text-xl leading-8">Take a break and explore quick reads, comments, and conversation starters.</p>
-          </div>
-          <TopicPills items={games} />
-        </div>
-      </section>
-
-      {pool.length ? (
-        <section className="bg-[#f3f2ef]">
-          <div className={`grid gap-8 py-16 lg:grid-cols-[1fr_1fr] ${container}`}>
-            <div className="rounded-lg bg-white p-8">
-              <PenLine className="h-8 w-8 text-[#408175]" />
-              <h2 className="mt-5 text-3xl font-normal leading-tight">Connect with people who can help</h2>
-              <Link href="/search" className="mt-8 inline-flex rounded-full border border-[#0b0909] px-6 py-3 text-sm font-semibold">Find people you know</Link>
-            </div>
-            <div className="grid gap-5">
-              {pool.slice(0, 2).map((post) => (
-                <FeedPreview key={post.id || post.slug} post={post} href={postHref(primaryTask, post, primaryRoute)} />
+            <div className="flex flex-col divide-y divide-white/[0.04]">
+              {side.map((post, i) => (
+                <Link
+                  key={post.id || post.slug}
+                  href={postHref(primaryTask, post, primaryRoute)}
+                  className="group flex flex-1 items-center gap-6 p-8 transition duration-500 hover:bg-white/[0.02] sm:p-10"
+                >
+                  <span className="shrink-0 text-[11px] font-medium tracking-[0.2em] text-[#5a5448]">{String(i + 2).padStart(3, '0')}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#7a7468]">{categoryOf(post)}</p>
+                    <h3 className="mt-2 line-clamp-2 text-lg font-light uppercase tracking-[0.06em] text-[#c8c2b6] transition duration-500 group-hover:text-[#e8e2d6]" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                      {post.title}
+                    </h3>
+                  </div>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-[#5a5448] transition duration-500 group-hover:text-[#c9a96e]" />
+                </Link>
               ))}
+              {!side.length ? (
+                <div className="flex flex-1 items-center justify-center p-10">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5a5448]">More content coming soon</p>
+                </div>
+              ) : null}
             </div>
           </div>
         </section>
       ) : null}
+
+      <section className="border-t border-white/[0.04] bg-black py-20 sm:py-28">
+        <div className={`${container} text-center`}>
+          <p className="text-[11px] font-medium uppercase tracking-[0.4em] text-[#7a7468]">For Freelancers</p>
+          <h2 className="mx-auto mt-4 max-w-2xl text-2xl font-light uppercase tracking-[0.1em] text-[#e8e2d6] sm:text-3xl" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            A space where your work gets the presentation it deserves
+          </h2>
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <Link href="/create" className="inline-flex items-center gap-2 border border-[#c9a96e] bg-transparent px-8 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#c9a96e] transition duration-500 hover:bg-[#c9a96e] hover:text-black">
+              Start creating
+            </Link>
+            <Link href="/search" className="inline-flex items-center gap-2 border border-white/[0.15] bg-transparent px-8 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#c8c2b6] transition duration-500 hover:border-white/40">
+              Browse all
+            </Link>
+          </div>
+        </div>
+      </section>
     </>
   )
 }
 
-function CompactCard({ post, href, index }: { post: SitePost; href: string; index: number }) {
-  const mode = index % 5
-  if (mode === 0) {
-    return (
-      <Link href={href} className="group grid overflow-hidden rounded-lg border border-[#dedbd4] bg-white md:grid-cols-[220px_1fr]">
-        <img src={getEditablePostImage(post)} alt={post.title} className="h-full min-h-[170px] w-full object-cover transition duration-500 group-hover:scale-105" />
-        <div className="p-5">
-          <p className="text-xs font-semibold uppercase text-[#408175]">{categoryOf(post)}</p>
-          <h3 className="mt-2 text-xl font-semibold leading-snug">{post.title}</h3>
-          <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#65615c]">{excerpt(post, 160)}</p>
-        </div>
-      </Link>
-    )
-  }
-  if (mode === 1) {
-    return (
-      <Link href={href} className="group block rounded-lg border border-[#dedbd4] bg-white p-5">
-        <div className="flex items-start gap-4">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e5f2ef] text-sm font-bold text-[#2e4540]">{index + 1}</span>
-          <div>
-            <p className="text-xs font-semibold uppercase text-[#408175]">{categoryOf(post)}</p>
-            <h3 className="mt-2 text-lg font-semibold leading-snug group-hover:text-[#0a66c2]">{post.title}</h3>
-            <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#65615c]">{excerpt(post, 110)}</p>
-          </div>
-        </div>
-      </Link>
-    )
-  }
-  if (mode === 2) {
-    return (
-      <Link href={href} className="group block overflow-hidden rounded-lg border border-[#dedbd4] bg-white">
-        <img src={getEditablePostImage(post)} alt={post.title} className="aspect-[16/10] w-full object-cover transition duration-500 group-hover:scale-105" />
-        <div className="p-5">
-          <h3 className="text-lg font-semibold leading-snug">{post.title}</h3>
-          <p className="mt-2 text-sm text-[#65615c]">{categoryOf(post)}</p>
-        </div>
-      </Link>
-    )
-  }
-  return <FeedPreview post={post} href={href} />
-}
-
 export function EditableTimeCollections({ primaryTask, primaryRoute, posts, timeSections }: HomeSectionProps) {
   const sections = timeSections.length ? timeSections : [{ key: 'latest', posts, href: primaryRoute }]
-  const visible = sections.filter((section) => section.posts.length).slice(0, 2)
+  const visible = sections.filter((s) => s.posts.length).slice(0, 2)
   if (!visible.length) return null
 
   return (
     <>
-      {visible.map((section, sectionIndex) => (
-        <section key={section.key} className={sectionIndex % 2 ? 'bg-[#f3f2ef]' : 'bg-white'}>
-          <div className={`py-16 ${container}`}>
-            <div className="flex items-center justify-between gap-4">
+      {visible.map((section) => (
+        <section key={section.key} className="border-t border-white/[0.04] bg-black py-16 sm:py-24">
+          <div className={container}>
+            <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-[#408175]">Top Content</p>
-                <h2 className="mt-2 text-3xl font-normal">Featured reads</h2>
+                <p className="text-[11px] font-medium uppercase tracking-[0.4em] text-[#7a7468]">Latest</p>
+                <h2 className="mt-3 text-2xl font-light uppercase tracking-[0.1em] text-[#e8e2d6] sm:text-3xl" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                  Recent Work
+                </h2>
               </div>
-              <Link href="/search" className="inline-flex items-center gap-1 rounded-full border border-[#0b0909] px-5 py-2.5 text-sm font-semibold">Show all <ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/search" className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#7a7468] transition duration-500 hover:text-[#c9a96e]">
+                View all <ArrowRight className="ml-1 inline h-3 w-3" />
+              </Link>
             </div>
-            <div className="mt-8 grid gap-5 lg:grid-cols-3">
-              {section.posts.slice(0, 6).map((post, index) => (
-                <CompactCard key={post.id || post.slug} post={post} href={postHref(primaryTask, post, primaryRoute)} index={index} />
+
+            <div className="mt-10">
+              {section.posts.slice(0, 8).map((post, index) => (
+                <Link
+                  key={post.id || post.slug}
+                  href={postHref(primaryTask, post, primaryRoute)}
+                  className="group grid items-center gap-6 border-b border-white/[0.06] py-5 transition duration-500 hover:border-white/[0.12] sm:grid-cols-[60px_1fr_180px_auto]"
+                >
+                  <span className="hidden text-right text-[11px] font-medium tracking-[0.2em] text-[#5a5448] sm:block">
+                    {String(index + 1).padStart(3, '0')}
+                  </span>
+                  <h3 className="text-base font-light uppercase tracking-[0.06em] text-[#c8c2b6] transition duration-500 group-hover:text-[#e8e2d6] sm:text-lg" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                    {post.title}
+                  </h3>
+                  <span className="hidden text-[10px] font-medium uppercase tracking-[0.2em] text-[#5a5448] sm:block">
+                    {categoryOf(post)}
+                  </span>
+                  <ArrowRight className="hidden h-4 w-4 text-[#5a5448] transition duration-500 group-hover:text-[#c9a96e] sm:block" />
+                </Link>
               ))}
             </div>
           </div>
@@ -260,30 +283,32 @@ export function EditableTimeCollections({ primaryTask, primaryRoute, posts, time
 }
 
 export function EditableHomeCta() {
+  const siteName = SITE_CONFIG.name.replace(/\.com$/i, '')
+
   return (
-    <section id="get-app" className="overflow-hidden bg-white">
-      <div className={`grid gap-8 py-20 lg:grid-cols-[0.75fr_1.25fr] ${container}`}>
-        <div className="rounded-lg bg-[#f3f2ef] p-8">
-          <h2 className="text-3xl font-normal text-[#9f3b20]">Who is {SITE_CONFIG.name.replace(/\.com$/i, '')} for?</h2>
-          <p className="mt-4 text-lg">Anyone looking to publish, learn, connect, or build a stronger professional presence.</p>
-          {['Find a writer or classmate', 'Share a new search', 'Build aportfolio'].map((item) => (
-            <Link key={item} href="/search" className="mt-4 flex items-center justify-between bg-[#e9e5df] px-5 py-4 text-lg">
-              {item} <ChevronRight className="h-5 w-5" />
+    <section className="border-t border-white/[0.04] bg-black py-24 sm:py-32">
+      <div className={`${container} text-center`}>
+        <p className="text-[11px] font-medium uppercase tracking-[0.4em] text-[#c9a96e]">Join the Community</p>
+        <h2 className="mx-auto mt-6 max-w-3xl text-3xl font-light uppercase tracking-[0.1em] text-[#e8e2d6] sm:text-4xl lg:text-5xl" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+          Who is {siteName} for?
+        </h2>
+        <p className="mx-auto mt-6 max-w-xl text-sm leading-[1.9] text-[#7a7468]">
+          Freelancers, writers, designers, consultants, and independent professionals who want their work discovered and appreciated.
+        </p>
+
+        <div className="mx-auto mt-14 grid max-w-3xl gap-0 border-t border-white/[0.06]">
+          {['Share your articles and essays', 'Build your creative profile', 'Connect with like-minded people'].map((item, i) => (
+            <Link
+              key={item}
+              href="/search"
+              className="group flex items-center justify-between border-b border-white/[0.06] px-6 py-5 transition duration-500 hover:bg-white/[0.02]"
+            >
+              <div className="flex items-center gap-5">
+                <span className="text-[11px] font-medium tracking-[0.2em] text-[#5a5448]">{String(i + 1).padStart(2, '0')}</span>
+                <span className="text-base font-light uppercase tracking-[0.06em] text-[#c8c2b6]" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{item}</span>
+              </div>
+              <ArrowRight className="h-4 w-4 text-[#5a5448] transition duration-500 group-hover:text-[#c9a96e]" />
             </Link>
-          ))}
-        </div>
-        <div className="relative min-h-[360px] overflow-hidden rounded-t-full bg-[#dcebf7]">
-          <div className="absolute inset-x-0 bottom-0 grid h-44 grid-cols-5">
-            <div className="bg-[#f2c2b5]" />
-            <div className="bg-[#c7d8d5]" />
-            <div className="bg-[#b5b9f0]" />
-            <div className="bg-[#d7eadf]" />
-            <div className="bg-[#f5d3b8]" />
-          </div>
-          {[UsersRound, BookOpen, GraduationCap, BriefcaseBusiness, MessageCircle, Sparkles, Building2, UserRound].map((Icon, index) => (
-            <div key={index} className="absolute flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#408175] shadow-sm" style={{ left: `${8 + (index % 4) * 22}%`, top: `${34 + Math.floor(index / 4) * 22}%` }}>
-              <Icon className="h-6 w-6" />
-            </div>
           ))}
         </div>
       </div>

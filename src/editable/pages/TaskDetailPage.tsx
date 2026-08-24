@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, ArrowUpRight, Bookmark, BriefcaseBusiness, Download, ExternalLink, FileText, Globe2, Image as ImageIcon, Mail, MoreHorizontal, Phone, Star, Tag, UserRound } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Download, ExternalLink, Globe2, Mail, Phone, Star, Tag, UserRound } from 'lucide-react'
 import { buildPostMetadata, buildTaskMetadata } from '@/lib/seo'
 import { fetchTaskPostBySlug, fetchTaskPosts } from '@/lib/task-data'
 import { getTaskConfig, SITE_CONFIG, type TaskKey } from '@/lib/site-config'
@@ -89,7 +89,8 @@ const formatPlainText = (raw: string) => {
 }
 
 const summaryText = (post: SitePost) => post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || ''
-const stripHtml = (value: string) => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+const decodeEntities = (value: string) => value.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+const stripHtml = (value: string) => decodeEntities(value.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim()
 const comparableText = (value: string) => stripHtml(value).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
 
 const leadText = (post: SitePost) => {
@@ -104,7 +105,7 @@ const categoryOf = (post: SitePost, fallback: string) => asText(getContent(post)
 export function TaskDetailView({ task, post, related }: { task: TaskKey; post: SitePost; related: SitePost[] }) {
   return (
     <EditableSiteShell>
-      <main style={taskThemeStyle(task)} className="min-h-screen bg-[#f3f2ef] text-[#0b0909]">
+      <main style={taskThemeStyle(task)} className="min-h-screen bg-black pt-20 text-[#c8c2b6]">
         {task === 'profile'
           ? <ProfileDetailLayout task={task} post={post} related={related} />
           : <DetailLayout task={task} post={post} related={related} />}
@@ -128,13 +129,10 @@ function RatingStars({ value }: { value: number }) {
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-0.5">
         {[0, 1, 2, 3, 4].map((i) => (
-          <Star
-            key={i}
-            className={`h-4 w-4 ${i < filled ? 'fill-[#408175] text-[#408175]' : 'text-[#c9cfcd]'}`}
-          />
+          <Star key={i} className={`h-3.5 w-3.5 ${i < filled ? 'fill-[#c9a96e] text-[#c9a96e]' : 'text-[#3a3428]'}`} />
         ))}
       </div>
-      <span className="text-sm font-semibold text-[#0b0909]">{value.toFixed(1)}</span>
+      <span className="text-[10px] font-medium tracking-[0.2em] text-[#7a7468]">{value.toFixed(1)}</span>
     </div>
   )
 }
@@ -145,86 +143,53 @@ function ProfileDetailLayout({ task, post, related }: { task: TaskKey; post: Sit
   const website = getField(post, ['website', 'url', 'link'])
   const category = categoryOf(post, taskConfig?.label || 'Profile')
   const rating = ratingFromPost(post)
-  const _overview = leadText(post) || getBody(post)
-  const gallery = (images.length ? images : [placeholder]).slice(0, 3)
-  while (gallery.length < 3) gallery.push(gallery[0] || placeholder)
 
   return (
     <>
-     
-
-      <section className="mx-auto max-w-[var(--editable-container)] px-4 py-6 sm:px-6 lg:px-8">
-        <Link
-          href={taskConfig?.route || '/'}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#56615e] transition hover:text-[#408175]"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to {taskConfig?.label || 'Profile'}
+      <section className="mx-auto max-w-[1200px] px-6 py-8 sm:px-8 lg:px-10">
+        <Link href={taskConfig?.route || '/'} className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-[#7a7468] transition duration-500 hover:text-[#c9a96e]">
+          <ArrowLeft className="h-3 w-3" /> Back to {taskConfig?.label || 'profiles'}
         </Link>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-          <div className="rounded-2xl border border-[#dedbd4] bg-white p-6 text-center">
-            <div className="mx-auto flex h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-[#e5f2ef]">
-              {images[0]
-                ? <img src={images[0]} alt={post.title} className="h-full w-full object-cover" />
-                : <UserRound className="h-16 w-16 text-[#408175]" />}
-            </div>
-            <h1 className="mt-5 text-2xl font-semibold leading-tight text-[#0b0909] sm:text-[26px]">{post.title}</h1>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-              <RatingStars value={rating} />
-              <span className="text-sm text-[#56615e]">{category}</span>
-              <span className="text-sm text-[#56615e]">{SITE_CONFIG.name}</span>
-            </div>
-            {website ? (
-              <div className="mt-5">
-                <Link
-                  href={website}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-full bg-[#408175] px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
-                >
-                  Visit website
-                </Link>
-              </div>
-            ) : null}
+        <div className="mt-12 text-center">
+          <div className="mx-auto flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border border-white/[0.08]">
+            {images[0] ? <img src={images[0]} alt={post.title} className="h-full w-full object-cover" /> : <UserRound className="h-12 w-12 text-[#5a5448]" />}
           </div>
-
-          <div className="space-y-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#408175]">Gallery</p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                {gallery.map((image, index) => (
-                  <div
-                    key={`${image}-${index}`}
-                    className="overflow-hidden rounded-2xl border border-[#dedbd4] bg-white"
-                  >
-                    <img
-                      src={image}
-                      alt={`${post.title} gallery ${index + 1}`}
-                      className="aspect-[4/3] w-full object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
+          <h1 className="mt-8 text-4xl font-light uppercase tracking-[0.1em] text-[#e8e2d6] sm:text-5xl" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            {post.title}
+          </h1>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
+            <RatingStars value={rating} />
+            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#5a5448]">{category}</span>
           </div>
+          {website ? (
+            <div className="mt-8">
+              <Link href={website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 border border-[#c9a96e] px-8 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#c9a96e] transition duration-500 hover:bg-[#c9a96e] hover:text-black">
+                Visit website <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          ) : null}
         </div>
 
-
-        <div className="mt-2 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="rounded-2xl border border-[#dedbd4] bg-white p-6 sm:p-7">
-            <BodyContent post={post} />
-          </div>
-          <aside className="space-y-4">
-            <SidePanel title={`More ${taskConfig?.label || 'profiles'}`} related={related} task={task} />
-            <div className="rounded-2xl border border-[#dedbd4] bg-white p-6">
-              <h2 className="text-2xl font-normal">About this profile</h2>
-              <div className="mt-5 grid gap-3 text-sm text-[#56615e]">
-                <p className="inline-flex items-center gap-2"><Tag className="h-4 w-4 text-[#408175]" /> {category}</p>
-                <p className="inline-flex items-center gap-2"><Globe2 className="h-4 w-4 text-[#408175]" /> {SITE_CONFIG.name}</p>
+        {images.length > 1 ? (
+          <div className="mt-16 grid gap-4 sm:grid-cols-3">
+            {images.slice(0, 3).map((image, index) => (
+              <div key={`${image}-${index}`} className="relative aspect-[4/3] overflow-hidden">
+                <img src={image} alt={`${post.title} ${index + 1}`} className="absolute inset-0 h-full w-full object-cover opacity-60" />
               </div>
-            </div>
-          </aside>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      <section className="mx-auto grid max-w-[1200px] gap-10 px-6 pb-20 pt-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-10">
+        <div className="border-t border-white/[0.06] pt-10">
+          <BodyContent post={post} />
         </div>
+        <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          <Ads slot="sidebar" showLabel className="mx-auto w-full" />
+          <NextProjectPanel related={related} task={task} />
+        </aside>
       </section>
     </>
   )
@@ -233,8 +198,8 @@ function ProfileDetailLayout({ task, post, related }: { task: TaskKey; post: Sit
 function BackLink({ task }: { task: TaskKey }) {
   const taskConfig = getTaskConfig(task)
   return (
-    <Link href={taskConfig?.route || '/'} className="inline-flex items-center gap-2 text-sm font-semibold text-[#56615e] transition hover:text-[#0a66c2]">
-      <ArrowLeft className="h-4 w-4" /> Back to {taskConfig?.label || 'posts'}
+    <Link href={taskConfig?.route || '/'} className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-[#7a7468] transition duration-500 hover:text-[#c9a96e]">
+      <ArrowLeft className="h-3 w-3" /> Back to {taskConfig?.label || 'posts'}
     </Link>
   )
 }
@@ -248,121 +213,101 @@ function DetailLayout({ task, post, related }: { task: TaskKey; post: SitePost; 
   const email = getField(post, ['email'])
   const address = getField(post, ['address', 'location', 'city'])
   const fileUrl = getField(post, ['fileUrl', 'pdfUrl', 'documentUrl', 'url'])
+  const heroImage = images[0] || placeholder
 
   return (
     <>
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <Ads slot="header" showLabel eager className="mx-auto w-full" />
-    </div>
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <Ads slot="header" showLabel eager className="mx-auto w-full" />
+      </div>
 
-    <section className="mx-auto grid max-w-[var(--editable-container)] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
-      <article className="min-w-0 overflow-hidden rounded-lg border border-[#dedbd4] bg-white">
-        <div className="p-4 sm:p-5">
+      <section className="relative min-h-[50vh] overflow-hidden">
+        <img src={heroImage} alt={post.title} className="absolute inset-0 h-full w-full object-cover opacity-25" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40" />
+        <div className="relative z-10 mx-auto max-w-[1200px] px-6 pb-16 pt-12 sm:px-8 lg:px-10">
           <BackLink task={task} />
-          <div className="mt-6 flex items-start gap-3">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5f2ef]">
-              {images[0] ? <img src={images[0]} alt="" className="h-full w-full object-cover" /> : <IconForTask task={task} />}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-semibold">{post.title}</p>
-              <p className="mt-1 line-clamp-2 text-sm text-[#666]">{categoryOf(post, taskConfig?.label || 'Post')} · {SITE_CONFIG.name}</p>
-            </div>
-            <MoreHorizontal className="h-5 w-5 text-[#333]" />
+          <p className="mt-10 text-[10px] font-medium uppercase tracking-[0.4em] text-[#c9a96e]">{theme.kicker}</p>
+          <h1 className="mt-4 max-w-4xl text-4xl font-light uppercase tracking-[0.08em] text-[#e8e2d6] sm:text-5xl lg:text-6xl" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            {post.title}
+          </h1>
+          {leadText(post) ? <p className="mt-6 max-w-2xl text-base leading-[1.9] text-[#c8c2b6]/80">{leadText(post)}</p> : null}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#7a7468]">{categoryOf(post, taskConfig?.label || 'Post')}</span>
+            {address ? <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#5a5448]">{address}</span> : null}
           </div>
         </div>
+      </section>
 
-        <div className="px-4 pb-5 sm:px-5">
-          <p className="text-sm font-semibold text-[#408175]">{theme.kicker}</p>
-          <h1 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">{post.title}</h1>
-          {leadText(post) ? <p className="mt-4 text-lg leading-8 text-[#363c3a]">{leadText(post)}</p> : null}
-          {task !== 'profile' ? <InfoChips items={[address, phone, email, website].filter(Boolean)} /> : null}
-        </div>
+      {task === 'pdf' && fileUrl ? <DocumentPreview post={post} fileUrl={fileUrl} /> : null}
 
-        {task === 'profile' ? <ProfileHero post={post} /> : null}
-        {task === 'pdf' && fileUrl ? <DocumentPreview post={post} fileUrl={fileUrl} /> : null}
-        {task !== 'pdf' ? <MediaBlock task={task} post={post} images={images} /> : null}
+      {task === 'image' && images.length > 0 ? (
+        <section className="mx-auto max-w-[1200px] px-6 py-10 sm:px-8 lg:px-10">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {images.slice(0, 4).map((image, index) => (
+              <div key={`${image}-${index}`} className="relative aspect-[4/3] overflow-hidden">
+                <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
-        <div className="mx-auto max-w-6xl px-4 py-6">
-          <Ads slot="in-feed" showLabel eager className="mx-auto w-full" />
-        </div>
+      <section className="mx-auto grid max-w-[1200px] gap-10 px-6 pb-16 pt-10 sm:px-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-10">
+        <div className="border-t border-white/[0.06] pt-10">
+          <div className="mx-auto max-w-6xl px-4 py-6">
+            <Ads slot="in-feed" showLabel eager className="mx-auto w-full" />
+          </div>
 
-        <div className="px-4 py-5 sm:px-5">
           <BodyContent post={post} />
           {task !== 'profile' ? <ContactAction website={website} phone={phone} email={email} fileUrl={task === 'pdf' ? fileUrl : ''} /> : null}
         </div>
 
-      </article>
-
-      <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-        <SidePanel title={`More in ${taskConfig?.label || 'Posts'}`} related={related} task={task} />
-        <div className="rounded-lg border border-[#dedbd4] bg-white p-6">
-          <h2 className="text-2xl font-normal">About this post</h2>
-          <div className="mt-5 grid gap-3 text-sm text-[#56615e]">
-            <p className="inline-flex items-center gap-2"><Tag className="h-4 w-4 text-[#408175]" /> {categoryOf(post, taskConfig?.label || 'Post')}</p>
-            <p className="inline-flex items-center gap-2"><Globe2 className="h-4 w-4 text-[#408175]" /> {SITE_CONFIG.name}</p>
+        <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          <Ads slot="sidebar" showLabel className="mx-auto w-full" />
+          <NextProjectPanel related={related} task={task} />
+          <div className="border border-white/[0.06] p-6">
+            <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#7a7468]">About</p>
+            <div className="mt-4 grid gap-3 text-sm text-[#5a5448]">
+              <p className="inline-flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-[#c9a96e]" /> {categoryOf(post, taskConfig?.label || 'Post')}</p>
+              <p className="inline-flex items-center gap-2"><Globe2 className="h-3.5 w-3.5 text-[#c9a96e]" /> {SITE_CONFIG.name}</p>
+            </div>
           </div>
-        </div>
-      </aside>
-    </section>
+        </aside>
+      </section>
 
+      {related.length ? (
+        <section className="border-t border-white/[0.04] bg-black py-20 text-center">
+          <p className="text-[11px] font-medium uppercase tracking-[0.4em] text-[#7a7468]">Next</p>
+          <h2 className="mt-3 text-3xl font-light uppercase tracking-[0.1em] text-[#e8e2d6] sm:text-4xl" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            {related[0].title}
+          </h2>
+          <Link href={`${taskConfig?.route || `/${task}`}/${related[0].slug}`} className="group mt-8 inline-block overflow-hidden">
+            <div className="relative aspect-[16/9] w-[340px] overflow-hidden sm:w-[480px]">
+              {getImages(related[0])[0] ? (
+                <img src={getImages(related[0])[0]} alt={related[0].title} className="absolute inset-0 h-full w-full object-cover opacity-40 transition duration-700 group-hover:opacity-60 group-hover:scale-105" />
+              ) : (
+                <div className="absolute inset-0 bg-[#111111]" />
+              )}
+            </div>
+          </Link>
+        </section>
+      ) : null}
     </>
-  )
-}
-
-function IconForTask({ task }: { task: TaskKey }) {
-  const className = 'h-7 w-7 text-[#408175]'
-  if (task === 'profile') return <UserRound className={className} />
-  if (task === 'listing' || task === 'classified') return <BriefcaseBusiness className={className} />
-  if (task === 'image') return <ImageIcon className={className} />
-  if (task === 'sbm') return <Bookmark className={className} />
-  return <FileText className={className} />
-}
-
-function InfoChips({ items }: { items: string[] }) {
-  if (!items.length) return null
-  return (
-    <div className="mt-5 flex flex-wrap gap-2">
-      {items.slice(0, 4).map((item) => (
-        <span key={item} className="rounded-full border border-[#dedbd4] px-3 py-1.5 text-xs font-semibold text-[#56615e]">{item}</span>
-      ))}
-    </div>
-  )
-}
-
-function MediaBlock({ task, post, images }: { task: TaskKey; post: SitePost; images: string[] }) {
-  const gallery = images.length ? images : [placeholder]
-  if (task === 'image') {
-    return (
-      <div className="grid gap-2 bg-[#f3f2ef] p-2 sm:grid-cols-2">
-        {gallery.slice(0, 4).map((image, index) => <img key={`${image}-${index}`} src={image} alt="" className="aspect-[4/3] w-full rounded-sm object-cover" />)}
-      </div>
-    )
-  }
-  if (task === 'sbm') return null
-  return <img src={gallery[0]} alt={post.title} className="max-h-[620px] w-full bg-[#d9d9d9] object-cover" />
-}
-
-function ProfileHero({ post }: { post: SitePost }) {
-  const role = getField(post, ['role', 'designation', 'company', 'location'])
-  return (
-    <div className="border-y border-[#e7e5df] bg-[#eef3f7] p-6 text-center">
-      <div className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-white ring-4 ring-white">
-        {getImages(post)[0] ? <img src={getImages(post)[0]} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-12 w-12 text-[#408175]" />}
-      </div>
-      <h2 className="mt-4 text-2xl font-semibold">{post.title}</h2>
-      {role ? <p className="mt-1 text-sm text-[#56615e]">{role}</p> : null}
-    </div>
   )
 }
 
 function DocumentPreview({ post, fileUrl }: { post: SitePost; fileUrl: string }) {
   return (
-    <div className="border-y border-[#e7e5df] bg-[#f8fafb]">
-      <div className="flex items-center justify-between gap-3 p-4">
-        <span className="text-sm font-semibold">Document preview</span>
-        <Link href={fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[#0a66c2] px-4 py-2 text-xs font-semibold text-white">Open <Download className="h-4 w-4" /></Link>
+    <div className="mx-auto max-w-[1200px] px-6 py-8 sm:px-8 lg:px-10">
+      <div className="border border-white/[0.06]">
+        <div className="flex items-center justify-between px-6 py-4">
+          <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#7a7468]">Document preview</span>
+          <Link href={fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 border border-[#c9a96e] px-5 py-2 text-[10px] font-medium uppercase tracking-[0.3em] text-[#c9a96e] transition duration-500 hover:bg-[#c9a96e] hover:text-black">
+            Open <Download className="h-3 w-3" />
+          </Link>
+        </div>
+        <iframe src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`} title={post.title} className="h-[70vh] w-full bg-[#0a0a0a]" />
       </div>
-      <iframe src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`} title={post.title} className="h-[70vh] w-full bg-white" />
     </div>
   )
 }
@@ -370,7 +315,7 @@ function DocumentPreview({ post, fileUrl }: { post: SitePost; fileUrl: string })
 function BodyContent({ post }: { post: SitePost }) {
   return (
     <div
-      className="article-content max-w-none text-[1rem] leading-8 text-[#0b0909]"
+      className="article-content max-w-none text-base leading-[1.9] text-[#c8c2b6]"
       dangerouslySetInnerHTML={{ __html: formatPlainText(getBody(post)) }}
     />
   )
@@ -379,27 +324,28 @@ function BodyContent({ post }: { post: SitePost }) {
 function ContactAction({ website, phone, email, fileUrl }: { website?: string; phone?: string; email?: string; fileUrl?: string }) {
   if (!website && !phone && !email && !fileUrl) return null
   return (
-    <div className="mt-6 flex flex-wrap gap-2.5">
-      {website ? <Link href={website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[#0a66c2] px-4 py-2.5 text-sm font-semibold text-white">Website <ExternalLink className="h-4 w-4" /></Link> : null}
-      {fileUrl ? <Link href={fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[#0a66c2] px-4 py-2.5 text-sm font-semibold text-white">Download <Download className="h-4 w-4" /></Link> : null}
-      {phone ? <a href={`tel:${phone}`} className="inline-flex items-center gap-2 rounded-full border border-[#0b0909] px-4 py-2.5 text-sm font-semibold"><Phone className="h-4 w-4" /> Call</a> : null}
-      {email ? <a href={`mailto:${email}`} className="inline-flex items-center gap-2 rounded-full border border-[#0b0909] px-4 py-2.5 text-sm font-semibold"><Mail className="h-4 w-4" /> Email</a> : null}
+    <div className="mt-10 flex flex-wrap gap-3">
+      {website ? <Link href={website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 border border-[#c9a96e] px-6 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#c9a96e] transition duration-500 hover:bg-[#c9a96e] hover:text-black">Website <ExternalLink className="h-3 w-3" /></Link> : null}
+      {fileUrl ? <Link href={fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 border border-[#c9a96e] px-6 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#c9a96e] transition duration-500 hover:bg-[#c9a96e] hover:text-black">Download <Download className="h-3 w-3" /></Link> : null}
+      {phone ? <a href={`tel:${phone}`} className="inline-flex items-center gap-2 border border-white/[0.15] px-6 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#c8c2b6] transition duration-500 hover:border-white/40"><Phone className="h-3 w-3" /> Call</a> : null}
+      {email ? <a href={`mailto:${email}`} className="inline-flex items-center gap-2 border border-white/[0.15] px-6 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#c8c2b6] transition duration-500 hover:border-white/40"><Mail className="h-3 w-3" /> Email</a> : null}
     </div>
   )
 }
 
-function SidePanel({ title, related, task }: { title: string; related: SitePost[]; task: TaskKey }) {
+function NextProjectPanel({ related, task }: { related: SitePost[]; task: TaskKey }) {
   const taskConfig = getTaskConfig(task)
+  if (!related.length) return null
   return (
-    <div className="rounded-lg border border-[#dedbd4] bg-white p-6">
-      <h2 className="text-2xl font-normal">{title}</h2>
-      <div className="mt-5 grid gap-1">
-        {related.length ? related.map((item) => (
-          <Link key={item.id || item.slug} href={`${taskConfig?.route || `/${task}`}/${item.slug}`} className="flex items-center justify-between gap-3 py-3 text-sm font-semibold">
-            <span className="line-clamp-2">{item.title}</span>
-            <ArrowUpRight className="h-4 w-4 shrink-0 text-[#666]" />
+    <div className="border border-white/[0.06] p-6">
+      <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#7a7468]">More</p>
+      <div className="mt-4 grid gap-1">
+        {related.map((item) => (
+          <Link key={item.id || item.slug} href={`${taskConfig?.route || `/${task}`}/${item.slug}`} className="group flex items-center justify-between gap-3 py-3 transition duration-500">
+            <span className="line-clamp-2 text-sm font-light text-[#c8c2b6] transition duration-500 group-hover:text-[#e8e2d6]">{item.title}</span>
+            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[#5a5448] transition duration-500 group-hover:text-[#c9a96e]" />
           </Link>
-        )) : <p className="text-sm leading-6 text-[#56615e]">More posts will appear here as the section grows.</p>}
+        ))}
       </div>
     </div>
   )
