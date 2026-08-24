@@ -92,24 +92,28 @@ export default function CommentsPage() {
 
   return (
     <EditableSiteShell>
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <main className="min-h-screen bg-black pt-28 text-[#c8c2b6]">
+        <section className="mx-auto max-w-[1200px] px-6 sm:px-8 lg:px-10">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              <p className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.4em] text-[#7a7468]">
                 <MessageSquare className="h-4 w-4" /> Local comments
               </p>
-              <h1 className="mt-4 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">Comments</h1>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
+              <h1 className="mt-4 text-4xl font-light uppercase tracking-[0.1em] text-[#e8e2d6] sm:text-5xl" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                Comments
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-[1.9] text-[#7a7468]">
                 Review comments saved in this browser from article pages.
               </p>
             </div>
-            <button type="button" className="rounded-full border border-[var(--editable-border)] px-4 py-2 text-sm font-black" onClick={refreshComments}>Refresh comments</button>
+            <button type="button" className="shrink-0 border border-white/[0.08] px-6 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#c8c2b6] transition duration-500 hover:border-white/[0.15]" onClick={refreshComments}>
+              Refresh
+            </button>
           </div>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full sm:max-w-md">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5a5448]" />
               <input
                 value={query}
                 onChange={(event) => {
@@ -117,51 +121,58 @@ export default function CommentsPage() {
                   setPage(1)
                 }}
                 placeholder="Search comments..."
-                className="h-11 w-full rounded-2xl border border-[var(--editable-border)] bg-white pl-9 pr-3 text-sm outline-none"
+                className="h-12 w-full border border-white/[0.08] bg-transparent pl-11 pr-4 text-sm text-[#e8e2d6] outline-none placeholder:text-[#5a5448] focus:border-[#c9a96e]"
               />
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#5a5448]">
               {filtered.length} comment{filtered.length === 1 ? '' : 's'} found
             </p>
           </div>
         </section>
 
-        {visibleComments.length ? (
-          <section className="mt-8 grid gap-4">
-            {visibleComments.map((item) => (
-              <article key={`${item.articleSlug}-${item.id}`} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">{item.name}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{formatDate(item.createdAt)}</p>
+        <section className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8 lg:px-10">
+          {visibleComments.length ? (
+            <div className="grid gap-0">
+              {visibleComments.map((item, index) => (
+                <article key={`${item.articleSlug}-${item.id}`} className="border-b border-white/[0.06] py-6">
+                  <div className="flex items-start gap-5">
+                    <span className="shrink-0 pt-1 text-[11px] font-medium tracking-[0.2em] text-[#5a5448]">{String(index + 1 + (currentPage - 1) * COMMENTS_PER_PAGE).padStart(3, '0')}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-[#e8e2d6]">{item.name}</p>
+                          <p className="mt-1 text-[11px] tracking-[0.1em] text-[#5a5448]">{formatDate(item.createdAt)}</p>
+                        </div>
+                        {item.articleSlug ? (
+                          <Link href={`/article/${item.articleSlug}`} className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#c9a96e] transition duration-500 hover:text-[#d4b87a]">
+                            Open article
+                          </Link>
+                        ) : null}
+                      </div>
+                      {item.articleTitle ? <p className="mt-3 text-sm font-medium text-[#c8c2b6]">{item.articleTitle}</p> : null}
+                      <p className="mt-2 text-sm leading-[1.8] text-[#7a7468]">{item.comment}</p>
+                    </div>
                   </div>
-                  {item.articleSlug ? (
-                    <Link href={`/article/${item.articleSlug}`} className="text-sm text-primary underline-offset-4 hover:underline">
-                      Open article
-                    </Link>
-                  ) : null}
-                </div>
-                {item.articleTitle ? <p className="mt-4 text-sm font-medium text-foreground">{item.articleTitle}</p> : null}
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.comment}</p>
-              </article>
-            ))}
-          </section>
-        ) : (
-          <section className="mt-8 rounded-2xl border border-dashed border-border bg-card/70 p-8 text-center">
-            <h2 className="text-xl font-semibold text-foreground">No comments yet</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Add a comment on any article page and it will appear here.</p>
-          </section>
-        )}
-
-        {filtered.length > COMMENTS_PER_PAGE ? (
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
-            <span>Page {currentPage} of {totalPages}</span>
-            <div className="flex gap-2">
-              <button type="button" className="rounded-full border border-[var(--editable-border)] px-4 py-2 font-black disabled:opacity-40" disabled={currentPage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</button>
-              <button type="button" className="rounded-full border border-[var(--editable-border)] px-4 py-2 font-black disabled:opacity-40" disabled={currentPage >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>Next</button>
+                </article>
+              ))}
             </div>
-          </div>
-        ) : null}
+          ) : (
+            <div className="border border-white/[0.06] px-8 py-20 text-center">
+              <h2 className="text-2xl font-light uppercase tracking-[0.1em] text-[#e8e2d6]" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>No comments yet</h2>
+              <p className="mt-3 text-sm text-[#5a5448]">Add a comment on any article page and it will appear here.</p>
+            </div>
+          )}
+
+          {filtered.length > COMMENTS_PER_PAGE ? (
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.06] pt-6">
+              <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#5a5448]">Page {currentPage} of {totalPages}</span>
+              <div className="flex gap-3">
+                <button type="button" className="border border-white/[0.08] px-5 py-2 text-[11px] font-medium uppercase tracking-[0.2em] text-[#c8c2b6] transition duration-500 hover:border-white/[0.15] disabled:opacity-30" disabled={currentPage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</button>
+                <button type="button" className="border border-white/[0.08] px-5 py-2 text-[11px] font-medium uppercase tracking-[0.2em] text-[#c8c2b6] transition duration-500 hover:border-white/[0.15] disabled:opacity-30" disabled={currentPage >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>Next</button>
+              </div>
+            </div>
+          ) : null}
+        </section>
       </main>
     </EditableSiteShell>
   )
